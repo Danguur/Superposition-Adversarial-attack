@@ -13,9 +13,7 @@ from sklearn.metrics import (
     classification_report,
 )
 
-# ============================================================
-# CONFIG
-# ============================================================
+
 
 SAMPLE_RATE = 16000
 SEGMENT_LENGTH_SEC = 0.64
@@ -41,9 +39,6 @@ def make_random_noise(duration_sec=SEGMENT_LENGTH_SEC, amplitude=AMPLITUDE_LIMIT
     return rng.uniform(-amplitude, amplitude, num_samples).astype(np.float32)
 
 
-# ============================================================
-# MUTING ATTACK
-# ============================================================
 
 class MutingAttack:
     def __init__(self, model):
@@ -59,9 +54,7 @@ class MutingAttack:
         self.tokenizer = whisper.tokenizer.get_tokenizer(
             model.is_multilingual, num_languages=model.num_languages, task="transcribe"
         )
-        # FIX: use the tokenizer's real no_speech token id, and the real
-        # sot_sequence (matching what transcribe() actually feeds the decoder),
-        # instead of a bare [[sot]] + raw EOT-logit target.
+        
         self.no_speech_token = self.tokenizer.no_speech
         self.sot_sequence = list(self.tokenizer.sot_sequence_including_notimestamps)
 
@@ -85,16 +78,7 @@ class MutingAttack:
             attacked_np = whisper.pad_or_trim(attacked_np)
             return torch.from_numpy(attacked_np).float().to(device)
 
-    # ------------------------------------------------------------------
-    # FIX: this replaces get_eot_probability(). Instead of forcing a bare
-    # [[sot]] token and reading the raw EOT logit at position 0 (which
-    # transcribe() never actually evaluates, due to SuppressBlank / the
-    # timestamp-forcing rule), we teacher-force the REAL sot_sequence that
-    # transcribe() uses, and target the NO_SPEECH token's probability at
-    # the final position of that sequence -- the same quantity Whisper's
-    # own no_speech_prob is computed from. This is differentiable and it
-    # matches what actually drives transcribe() to emit an empty result.
-    # ------------------------------------------------------------------
+ 
     def get_no_speech_prob(self, audio_tensor, keep_grad=False):
         if keep_grad:
             mel = whisper.log_mel_spectrogram(audio_tensor, n_mels=self.model.dims.n_mels)
