@@ -1,0 +1,16 @@
+venv/
+env/
+Lib/
+Scripts/
+share/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+pyvenv.cfg
+*.wav
+*.pt
+*.docx
+*.png
+audiowithnoise/
+audio_files/
